@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'Core',
+    'InternalData'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -49,6 +50,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'crum.CurrentRequestUserMiddleware',
 )
 
 ROOT_URLCONF = 'CFSProject.urls'
