@@ -167,5 +167,6 @@
   {"model": "InternalData.EducationLevel", "pk": 6, "fields": {"name": "Masters"}},
   {"model": "InternalData.EducationLevel", "pk": 7, "fields": {"name": "I Don't Know"}},
   {"model": "InternalData.EducationLevel", "pk": 8, "fields": {"name": "No Answer"}},
-  {"model": "InternalData.EducationLevel", "pk": 9, "fields": {"name": "Others"}}
+  {"model": "InternalData.EducationLevel", "pk": 9, "fields": {"name": "Others"}},
+  {"model": "Core.City",  "pk": 1, "fields": {"name": "Damascus"}}
 ]

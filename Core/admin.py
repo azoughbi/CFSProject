@@ -1,8 +1,88 @@
+from django import forms
 from django.contrib import admin
-from .models import Organization
+from django.contrib.auth.models import Group
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from .models import Organization, MyUser, City
+
+
+class CityAdmin(admin.ModelAdmin):
+    main_role = ""
+
+    def has_add_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+            return True
+
+        elif request.user.is_Enumerator is True:
+            return False
+
+        elif request.user.is_AreaSupervisor is True:
+            return False
+
+        elif request.user.is_Verification is True:
+            return False
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+            return True
+
+        elif request.user.is_Enumerator is True:
+            return False
+
+        elif request.user.is_AreaSupervisor is True:
+            return False
+
+        elif request.user.is_Verification is True:
+            return False
+
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+            return True
+
+        elif request.user.is_Enumerator is True:
+            return False
+
+        elif request.user.is_AreaSupervisor is True:
+            return False
+
+        elif request.user.is_Verification is True:
+            return False
 
 
 class OrganizationAdmin(admin.ModelAdmin):
+
+    main_role = ""
+
+    def has_add_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+            return True
+        elif request.user.is_Enumerator is True:
+            return True
+        elif request.user.is_AreaSupervisor is True:
+            return False
+        elif request.user.is_Verification is True:
+            return False
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+            return True
+        elif request.user.is_Enumerator is True:
+            return True
+        elif request.user.is_AreaSupervisor is True:
+            return False
+        elif request.user.is_Verification is True:
+            return False
+
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+            return True
+        elif request.user.is_Enumerator is True:
+            return True
+        elif request.user.is_AreaSupervisor is True:
+            return True
+        elif request.user.is_Verification is True:
+            return True
+
     list_display = (
         'name',
         'area_of_work',
@@ -12,178 +92,152 @@ class OrganizationAdmin(admin.ModelAdmin):
         'district',
     )
 
+
+class UserCreationForm(forms.ModelForm):
+    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
+    password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
+
+    class Meta:
+        model = MyUser
+        fields = ('username', 'email', 'city',)
+
+    def clean_password2(self):
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords doesn't match")
+        return password2
+
+    def save(self, commit=True):
+        user = super(UserCreationForm, self).save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+
+        if commit:
+            user.save()
+        return user
+
+
+class UserChangeForm(forms.ModelForm):
+
+    password = ReadOnlyPasswordHashField()
+
+    class Meta:
+        model = MyUser
+        fields = (
+            'username',
+            'email',
+            'city',
+            'password',
+            'is_active',
+            'is_admin',
+            'is_Enumerator',
+            'is_AreaSupervisor',
+            'is_Verification'
+        )
+
+    def clean_password(self):
+        return self.initial["password"]
+
+
+class MyUserAdmin(UserAdmin):
+    form = UserChangeForm
+    add_form = UserCreationForm
+
+    list_display = ('username','email','is_admin','is_Enumerator','is_AreaSupervisor','is_Verification')
+
+    list_filter = ('is_admin','is_Enumerator','is_AreaSupervisor','is_Verification')
+
     fieldsets = (
         (
-            'Basic Info', {
+            None, {
                 'fields': (
-                    'enumerator_name',
-                    'interview_location',
-                    'interview_date',
-                    'person_in_charge',
-                    'position',
-                )
-            }
-        ),
-        (
-            'General Info', {
-                'fields': (
-                    'description',
-                    'name',
-                    'name_en',
-                    'name_i18n',
-                    'short_name',
-                    'director',
-                    'executive',
-                )
-            }
-        ),
-        (
-            'Contact Info', {
-                'fields': (
-                    'website',
-                    'facebook',
-                    'twitter',
+                    'username',
                     'email',
-                    'phone',
-                    'contact_person',
+                    'password'
                 )
             }
         ),
         (
-            'Office branches', {
+            'Personal Info', {
                 'fields': (
-                    'area_of_work',
-                    'country',
-                    'province',
                     'city',
-                    'district',
                 )
             }
         ),
         (
-            'Organization Structure', {
+            'Permissions', {
                 'fields': (
-                    'found_date',
-                    'found_location',
-                    'is_registered',
-                    'registration_country',
-                    'members_num',
-                    'fulltime_num',
-                    'parttime_num',
-                    'volunteer_num',
-                    'hr_challenge',
-                    'position_training',
-                    'org_training',
-                    'board_check',
-                    'board_type',
-                    'board_female',
-                    'bylaw_written',
-                    'bylaw_public',
-                    'bylaw_upload',
-                    'regulation_check',
-                    'regulation_commit',
-                    'is_section',
-                    'sections',
-                    'evaluation_method',
-                )
-            }
-        ),
-        (
-            'Work Fields & Profession', {
-                'fields': (
-                    'primary_section',
-                    'target_audience',
-                )
-            }
-        ),
-        (
-            'Financial Structure', {
-                'fields': (
-                    'funds_recieve',
-                    'fund_send',
-                    'finance_controller',
-                    'finance_controlled',
-                    'finance_planning',
-                    'planning_period',
-                    'finance_logs',
-                    'funder_type',
-                    'finance_monitoring',
-                    'finance_external_monitoring',
-                    'international_fund',
-                    'fund_recieved_check',
-                    'fund_recieved_type',
-                    'funder_name',
-                    'fund_amount',
-                    'fund_challenge',
-                    'funder_challenge',
-                    'fund_strategies',
-                )
-            }
-        ),
-        (
-            'Public Relation', {
-                'fields': (
-                    'local_cso_relation',
-                    'local_cso_cooperation',
-                    'allies',
-                    'target_audience_challenge',
-                    'local_auth_challgenge',
-                    'security_challenge',
-                    'international_partnership',
-                    'international_conferences',
-                    'society_impression',
-                )
-            }
-        ),
-        (
-            'Projects', {
-                'fields': (
-                    'is_programme',
-                    'project_name',
-                    'province',
-                    'work_field',
-                    'project_staff',
-                    'project_duration',
-                )
-            }
-        ),
-        (
-            'Events', {
-                'fields': (
-                    'event_type',
-                    'event_date',
-                    'event_reason',
-                    'event_result',
-                    'event_response',
-                )
-            }
-        ),
-        (
-            'Needs', {
-                'fields': (
-                    'activity_needed',
-                    'main_needs',
-                    'training_needs',
-                    'needs_challenge',
-                )
-            }
-        ),
-        (
-            'Organization Profile', {
-                'fields': (
-                    'education_level',
-                    'special_skills',
-                    'multiple_rel_eth',
-                    'representation',
-                    'underage_employee',
-                    'special_employees',
-                    'local_reputation',
-                    'basic_reputation',
-                    'strength',
-                    'motives',
+                    'is_admin',
+                    'is_Enumerator',
+                    'is_AreaSupervisor',
+                    'is_Verification',
+                    'groups',
+                    'user_permissions'
                 )
             }
         ),
     )
 
+    add_fieldsets = (
+        (
+            None, {
+                'classes': (
+                    'wide',
+                ),
+                'fields': (
+                    'username',
+                    'email',
+                    'city',
+                    'password1',
+                    'password2'
+                )
+            }
+        ),
+        (
+            'Permissions', {
+                'fields': (
+                    'groups',
+                    'user_permissions',
+                )
+            }
+        ),
+    )
+    search_fields = ('email',)
+    ordering = ('email',)
+    filter_horizontal = ()
+
+    def has_add_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+           return True
+        elif request.user.is_Enumerator is True:
+            return False
+        elif request.user.is_AreaSupervisor is True:
+            return False
+        elif request.user.is_Verification is True:
+            return False
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+           return True
+        elif request.user.is_Enumerator is True:
+            return False
+        elif request.user.is_AreaSupervisor is True:
+            return False
+        elif request.user.is_Verification is True:
+            return False
+
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_admin is True:
+           return True
+        elif request.user.is_Enumerator is True:
+            return False
+        elif request.user.is_AreaSupervisor is True:
+            return False
+        elif request.user.is_Verification is True:
+            return False
+
+
+admin.site.register(MyUser, MyUserAdmin)
 admin.site.register(Organization, OrganizationAdmin)
+admin.site.register(City, CityAdmin)
+admin.site.unregister(Group)
